@@ -1,0 +1,10 @@
+# editor
+.vscode
+
+# virtual env
+venv
+
+# upload dir
+uploads/*
+
+__pycache__
