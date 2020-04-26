@@ -3,6 +3,8 @@ from flask import Flask, request
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
+from .aws_tools import detect_faces
+
 UPLOAD_FOLDER = '/home/superg28/projects/paydna-flask-upload-server/uploads'
 
 app = Flask(__name__)
@@ -18,8 +20,11 @@ def file_upload():
     if request.method == 'POST':
         file = request.files['myfile']
         print(file.filename)
-        filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return 'File uploaded'
+        if(detect_faces(file.stream.read())):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return { "status": "success", "message": "Face found, file saved" }
+        else:
+            return { "status": "fail", "message": "Face not found in file" }
     else:
         return 'Uploads Found'
