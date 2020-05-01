@@ -5,10 +5,29 @@ from werkzeug.utils import secure_filename
 
 from .aws_tools import detect_faces
 
+# import and config logging
+import logging
+import logzero
+from logzero import logger
+
+LOG_FILE = '/home/superg28/projects/paydna-flask-upload-server/logs'
+logzero.logfile(filename='logs/paydna-api.log', maxBytes=25e7, backupCount=4, loglevel=logging.DEBUG)
+logFormat = logging.Formatter('%(asctime)s:%(module)s:%(lineno)d:%(levelname)s:%(message)s')
+logzero.formatter(logFormat)
+
+# import blueprints
+from flaskapp.api.tutuka import tutukabp
+from flaskapp.api.luhn import luhnbp
+
 UPLOAD_FOLDER = '/home/superg28/projects/paydna-flask-upload-server/uploads'
+
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# register blueprints
+app.register_blueprint(tutukabp)
+app.register_blueprint(luhnbp)
 
 CORS(app, resources=r'/upload')
 
