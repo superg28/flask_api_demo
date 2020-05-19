@@ -8,4 +8,6 @@ venv
 # upload dir
 uploads/*
 
+references
+
 __pycache__
