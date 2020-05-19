@@ -3,7 +3,7 @@ from flask import Flask, request
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
-from .aws_tools import detect_faces
+from .aws_tools import detect_faces, detect_text
 
 # import and config logging
 import logging
@@ -18,32 +18,49 @@ logzero.formatter(logFormat)
 # import blueprints
 from flaskapp.api.tutuka import tutukabp
 from flaskapp.api.luhn import luhnbp
+from flaskapp.api.users import usersbp
 
-UPLOAD_FOLDER = '/home/superg28/projects/paydna-flask-upload-server/uploads'
-
+ID_UPLOAD_FOLDER = '/home/superg28/projects/paydna-flask-upload-server/uploads/id'
+POA_UPLOAD_FOLDER = '/home/superg28/projects/paydna-flask-upload-server/uploads/poa'
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['ID_UPLOAD_FOLDER'] = ID_UPLOAD_FOLDER
+app.config['POA_UPLOAD_FOLDER'] = POA_UPLOAD_FOLDER
 
 # register blueprints
 app.register_blueprint(tutukabp)
 app.register_blueprint(luhnbp)
+app.register_blueprint(usersbp)
 
-CORS(app, resources=r'/upload')
+CORS(app, resources=r'/upload/*')
 
 def file_type(filename):
     print(filename.rsplit('.', 1)[1])
 
-@app.route('/upload', methods=['GET', 'POST'])
-def file_upload():
+@app.route('/upload/<string:endpoint>', methods=['GET', 'POST'])
+def file_upload(endpoint):
+    print(f"upload endpoint: {endpoint}")
     if request.method == 'POST':
         file = request.files['myfile']
-        print(file.filename)
-        if(detect_faces(file.stream.read())):
+        filebytes = file.stream.read()
+        if endpoint == 'id':
+            # if(detect_faces(file.stream.read())):
+            if(detect_faces(filebytes)):
+                # detect_text(filebytes)
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['ID_UPLOAD_FOLDER'], filename))
+                return { "faceFound": True, "fileName": os.path.join(app.config['ID_UPLOAD_FOLDER'], filename) }
+            else:
+                return { "faceFound": False }
+        elif endpoint == 'poa':
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return { "status": "success", "message": "Face found, file saved" }
+            file.save(os.path.join(app.config['POA_UPLOAD_FOLDER'], filename))
+            return { "proofUploaded": True, "fileName": os.path.join(app.config['POA_UPLOAD_FOLDER'], filename) }
         else:
-            return { "status": "fail", "message": "Face not found in file" }
+            return { 'ResultText': 'Endpoint not found'}
     else:
         return 'Uploads Found'
+
+@app.route('/auth', methods=['POST'])
+def authenticate():
+    return { 'authentication': 'service' }
