@@ -20,3 +20,19 @@ def detect_faces(image_file_bytes):
 
     # return len(response['FaceDetails'])
     return True if len(response['FaceDetails']) == 1 and response['FaceDetails'][0]['Confidence'] > 85.0 else False
+
+def detect_text(image_file_bytes):
+    client = boto3.client('rekognition')
+
+    # stream the bytes
+    resp = client.detect_text(Image={'Bytes': image_file_bytes})
+
+    textDetections = resp['TextDetections']
+    for text in textDetections:
+        print('Detected text:' + text['DetectedText'])
+        print('Confidence: ' + "{:.2f}".format(text['Confidence']) + "%")
+        print('Id: {}'.format(text['Id']))
+        if 'ParentId' in text:
+            print('Parent Id: {}'.format(text['ParentId']))
+        print('Type:' + text['Type'])
+        print()
