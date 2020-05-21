@@ -1,15 +1,16 @@
 from flask import (
-    Blueprint, render_template, request, url_for
+    Blueprint, render_template, request, url_for,
 )
 from flask_cors import CORS
 
-import json
-import re
+import json, re, os
 
 # logging
 from logzero import logger
 from flaskapp.api.common import get_trans_id
 from envparse import Env
+
+from datetime import datetime
 
 env = Env(
     UserFile=str,
@@ -19,6 +20,8 @@ env = Env(
 )
 env.read_envfile()
 
+from flaskapp.api.common import encrypt_str, decrypt_str
+
 # DB configs need to go here
 from pymongo import MongoClient
 mdbclient = MongoClient(env('MongoUrl'), username=env('MongoUser'), password=env('MongoPass'))
@@ -26,6 +29,8 @@ paydnadb = mdbclient.payDNA
 
 usersbp = Blueprint('users', __name__, url_prefix='/api/users')
 CORS(usersbp)
+
+SERVER_PATH_PREFIX = '/home/superg28/projects/paydna-flask-upload-server'
 
 def field_filter(field_string):
     postal_pattern = re.compile(r'^postal_')
@@ -40,6 +45,45 @@ def field_filter(field_string):
     else:
         return ('', field_string)
 
+def move_files(uid, filepath):
+    '''
+    move the uploaded (and virus scanned) files to a uid named directory
+    :uid the users id assigned on upload
+    :file_type determines the folder that gets created
+    :filename path of the originally uploaded file
+    :return a path to the relocated file for insertion into the database
+    '''
+    # cast uid to string
+    uid = str(uid)
+    uidpath = f'user_files/{uid}'
+    print(f'uidpath = {uidpath}')
+    print(f'Server Path {SERVER_PATH_PREFIX}')
+    subdirpath = os.path.join(SERVER_PATH_PREFIX, uidpath)
+    print(f'subdirpath: {subdirpath}')
+    if not os.path.exists(subdirpath):
+        try:
+            os.mkdir(subdirpath)
+        except:
+            print(f'Can\'t create directory, {subdirpath}')
+            return
+
+    filename = filepath.split('/')[-1]
+    try:
+        os.rename(filepath, os.path.join(subdirpath, filename))
+    except Exception as err:
+        print(f'Error moving file from {filepath} to {os.path.join(subdirpath, filename)}\nError: {err}')
+
+    return os.path.join(uidpath, filename)
+        
+
+def get_uid():
+    # returns a managed uid from the database counters
+    with paydnadb.counters.find({'_id': 'user_id'}) as cursor:
+        uid = cursor.next().get('sequence') + 1
+        resp = paydnadb.counters.find_one_and_update({'_id': 'user_id'},{'$inc': {'sequence': 1}})
+        print(resp)
+    return uid
+
 # load users
 def load_users():
     with open(env('UserFile'), 'r') as fp:
@@ -53,7 +97,8 @@ def add_user(user: dict):
 @usersbp.route('/add', methods=['POST'])
 def user_add():
     user = {}
-    uid = paydnadb.users.count_documents({}) + 1
+    print(request.headers)
+    uid = get_uid()
     user['uid'] = uid
     # default role for all new users
     user['role'] = 'User'
@@ -61,9 +106,13 @@ def user_add():
         sub, processedField = field_filter(field)
         value = request.form[field]
         if value != '' and value != 'undefined':
-            print(f'{field}: {value}')
+            print(f'{processedField}: {value}')
         if sub == '':
-            user[processedField] = value
+            # move the files to a new uid namespace for the foldername
+            if processedField == 'id_document' or processedField == 'poa_document':
+                user[processedField] = move_files(uid, decrypt_str(value))
+            else:
+                user[processedField] = value
         else:
             if user.get(sub):
                 if value != 'undefined' and value != '':
@@ -72,6 +121,8 @@ def user_add():
                 if value != 'undefined' and value != '':
                     user[sub] = {}
                     user[sub][processedField] = value
+    user['registered_date'] = datetime.now().strftime('%Y-%m-%d.%H:%M:%S')
+    # user['registered_by'] # TODO: add registerer to the user
     print(user)
     resp = paydnadb.users.insert_one(user)
     if resp.inserted_id:
@@ -83,7 +134,7 @@ def user_add():
 def users():
     return { 'status': 'Users List', 'users': load_users() }
 
-@usersbp.route('/by-id/<int:uid>', methods=['GET'])
+@usersbp.route('/<int:uid>', methods=['GET'])
 def user(uid):
     print(f'URL id: {uid}')
     for user in load_users():

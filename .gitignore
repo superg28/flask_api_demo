@@ -8,6 +8,9 @@ venv
 # upload dir
 uploads/*
 
+# any keys
+*.key
+
 references
 
 __pycache__
