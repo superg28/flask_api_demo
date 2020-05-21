@@ -7,6 +7,10 @@ venv
 
 # upload dir
 uploads/*
+user_files/*
+
+# log files
+logs/*
 
 # any keys
 *.key
