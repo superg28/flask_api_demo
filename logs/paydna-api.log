@@ -8,3 +8,9 @@
 2020-05-21 09:19:25,270:__init__:60:INFO:/home/superg28/projects/paydna-flask-upload-server/uploads/id/SampleID.jpg
 2020-05-21 09:29:46,633:__init__:60:INFO:/home/superg28/projects/paydna-flask-upload-server/uploads/id/SampleID.jpg
 2020-05-21 09:32:38,258:__init__:60:INFO:/home/superg28/projects/paydna-flask-upload-server/uploads/id/SampleID.jpg
+2020-05-21 11:22:57,921:__init__:60:INFO:/home/superg28/projects/paydna-flask-upload-server/uploads/id/SampleID.jpg
+2020-05-21 14:05:50,876:__init__:31:INFO:Card balance for sandbox, 5338922342978159
+2020-05-21 14:06:32,244:__init__:31:INFO:Card balance for sandbox, 5338922017716157
+2020-05-21 14:10:47,781:__init__:32:INFO:Card balance for sandbox (4731098549), 5338922017716157
+2020-05-21 14:11:51,744:__init__:32:INFO:Card balance for sandbox (4731098549), 5338922017716157
+2020-05-21 14:11:52,263:__init__:35:INFO:Balance response: card: 5338922017716157, 'expiryDate': 20491231T00:00:00, 'balance': 90933, 'transactionID': 20200521141151.744776

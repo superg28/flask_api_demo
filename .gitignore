@@ -10,7 +10,7 @@ uploads/*
 user_files/*
 
 # log files
-logs/*
+*.log
 
 # any keys
 *.key
