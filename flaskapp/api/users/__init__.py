@@ -1,5 +1,5 @@
 from flask import (
-    Blueprint, render_template, request, url_for,
+    Blueprint, render_template, request, url_for, g
 )
 from flask_cors import CORS
 
@@ -14,21 +14,22 @@ from datetime import datetime
 
 env = Env(
     UserFile=str,
-    MongoUrl=str,
-    MongoUser=str,
-    MongoPass=str
 )
 env.read_envfile()
 
 from flaskapp.api.common import encrypt_str, decrypt_str
 
 # DB configs need to go here
-from pymongo import MongoClient
-mdbclient = MongoClient(env('MongoUrl'), username=env('MongoUser'), password=env('MongoPass'))
-paydnadb = mdbclient.payDNA
+# from pymongo import MongoClient
+# mdbclient = MongoClient(env('MongoUrl'), username=env('MongoUser'), password=env('MongoPass'))
+# paydnadb = mdbclient.payDNA
 
-usersbp = Blueprint('users', __name__, url_prefix='/api/users')
-CORS(usersbp)
+from flaskapp.mongodb import conn
+paydnadb = conn.db_init()
+
+bp = Blueprint('users', __name__, url_prefix='/api/users')
+# CORS(bp, resources=r'/*')
+CORS(bp)
 
 SERVER_PATH_PREFIX = '/home/superg28/projects/paydna-flask-upload-server'
 
@@ -74,7 +75,6 @@ def move_files(uid, filepath):
         print(f'Error moving file from {filepath} to {os.path.join(subdirpath, filename)}\nError: {err}')
 
     return os.path.join(uidpath, filename)
-        
 
 def get_uid():
     # returns a managed uid from the database counters
@@ -86,20 +86,21 @@ def get_uid():
 
 # load users
 def load_users():
-    with open(env('UserFile'), 'r') as fp:
-        users = json.load(fp)
+    users = []
+    for user in paydnadb.users.find({}, {'uid': 1, 'name': 1, 'surname': 1, 'contact_email': 1, 'contact_cell': 1}):
+        users.append(user)
     return users
 
 def add_user(user: dict):
     with open(env('UserFile'), 'w') as fp:
         users = json.dump(user, fp, indent=4)
 
-@usersbp.route('/add', methods=['POST'])
+@bp.route('/add', methods=['POST'])
 def user_add():
     user = {}
     print(request.headers)
     uid = get_uid()
-    user['uid'] = uid
+    user['_id'] = uid
     # default role for all new users
     user['role'] = 'User'
     for field in request.form:
@@ -130,18 +131,17 @@ def user_add():
     else:
         return { 'resultCode': 255, 'resultText': 'Error adding user'}
 
-@usersbp.route('/', methods=['GET'])
+@bp.route('/all', methods=['GET'])
 def users():
     return { 'status': 'Users List', 'users': load_users() }
 
-@usersbp.route('/<int:uid>', methods=['GET'])
+@bp.route('/<int:uid>', methods=['GET'])
 def user(uid):
     print(f'URL id: {uid}')
-    for user in load_users():
-        if user['uid'] == uid:
-            return user
+    if paydnadb.users.count_documents({'_id':uid}) != 0:
+        return { 'user': paydnadb.users.find_one({'_id':uid}) }
     return { 'status': 204, 'message': 'User not found'}
 
-@usersbp.route('/update/<int:uid>', methods=['POST'])
+@bp.route('/update/<int:uid>', methods=['POST'])
 def user_update(uid):
     return '<<< user update >>>'
