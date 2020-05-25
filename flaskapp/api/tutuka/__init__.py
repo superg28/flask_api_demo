@@ -25,7 +25,11 @@ xml_client = tutuka_xmlrpc.Tutuka_XMLRPC({'terminalID' : env('TerminalID'), 'ter
 bp = Blueprint('tutuka', __name__, url_prefix='/api/tutuka')
 CORS(bp)
 
-PROFILES = [{ "name": "sandbox", "profileID": "4731098549"}, { "name": "dummy", "profileID": "1235497356" }]
+def pid_to_name(pid):
+    return paydnadb.profiles.find_one({'_id': pid}, {'name': 1}).get('name')
+
+def name_to_pid(name):
+    return paydnadb.profiles.find_one({'name': name}, {'_id': 1}).get('_id')
 
 @bp.route('/balance', methods=['GET'])
 def get_balance():
@@ -41,22 +45,35 @@ def get_balance():
     else:
         return resp
 
-@bp.route('/profilebalance', methods=['GET'])
-def get_profilebalance():
-    profilename = request.args.get('profilename')
-    profile = { k:v for (k,v) in [profile.items() for profile in PROFILES if profile['name'] == profilename][0] }
-    print(profile)
-    if profile != {}:
-        resp = xml_client.profile_balance(profile['name'], get_trans_id())
+@bp.route('/profilebalance/<string:profilename>', methods=['GET'])
+def get_profilebalance(profilename):
+    print(profilename)
+    profileID = name_to_pid(profilename)
+    print(profileID)
+    if profileID != '':
+        resp = xml_client.profile_balance(profileID, get_trans_id())
     # return { 'profile': resp.get('cardNumber'), 'expiryDate': resp.get('expiryDate').value, 'balance': resp.get('balanceAmount'), 'transactionID': resp.get('clientTransactionID') }
-    return { 'resp': resp }
+    if resp.get('resultCode') == 1:
+        paydnadb.profiles.update_one({'name': profilename}, {'$set': {'balance': resp.get('balanceAmount')}})
+        return { 'profile': profilename, 'balance': resp.get('balanceAmount') }
+    else:
+        return { 'result': resp.get('resultText')}
 
 @bp.route('/profiles', methods=['GET'])
 def get_profiles():
     profiles = []
-    for profile in paydnadb.profiles.find({}, {'_id': 0}):
+    for profile in paydnadb.profiles.find({}):
         profiles.append(profile)
     return { "profiles": profiles }
+
+@bp.route('/profiles/<string:name>', methods=['GET'])
+def get_profile(name):
+    return { "profile": paydnadb.profiles.find_one({'name': name}, {'_id': 0}) }
+
+@bp.route('/profiles/<string:name>/cards', methods=['GET'])
+def get_profile_cards(name):
+    profile_cards = [x for x in paydnadb.cards.find({'profile': name_to_pid(name)}, {'_id': 1, 'balance': 1})]
+    return { "cards": profile_cards }
 
 @bp.route('/schemes', methods=['GET'])
 def get_schemes():
@@ -68,9 +85,13 @@ def get_schemes():
 @bp.route('/cards', methods=['GET'])
 def get_cards():
     cards = []
-    for card in paydnadb.cards.find({}, {'_id': 0}):
+    for card in paydnadb.cards.find({}, {'authNum': 0}):
         cards.append(card)
-    return { "profiles": cards }
+    return { "cards": cards }
+
+@bp.route('/cards/<id>', methods=['GET'])
+def get_card(id):
+    return { "card": paydnadb.cards.find_one({'_id': id}, {'authNum': 0}) }
 
 @bp.route('/', methods=['GET'])
 def root():

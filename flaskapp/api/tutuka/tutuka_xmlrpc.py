@@ -42,7 +42,7 @@ class Tutuka_XMLRPC:
         check_sum = self._create_checksum([method, self.terminalID, profileID, cardNumber, firstname, lastname, id_passport, cellphone, transactionID, transationDate.value])
         
         try:
-            response = self.xmlc.Balance(self.terminalID, profileID, cardNumber, firstname, lastname, id_passport, cellphone, transactionID, transationDate, check_sum)
+            response = self.xmlc.AllocateCard(self.terminalID, profileID, cardNumber, firstname, lastname, id_passport, cellphone, transactionID, transationDate, check_sum)
             return response
         except xmlrpc.client.ProtocolError as err:
             print("Protocol Error : {}".format(err))
