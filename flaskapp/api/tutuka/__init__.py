@@ -16,8 +16,8 @@ env = Env(
 env.read_envfile()
 
 # get db connection
-from flaskapp.mongodb import conn
-paydnadb = conn.db_init()
+from flaskapp.mongoconnection import db_init
+paydnadb = db_init()
 
 from flaskapp.api.tutuka import tutuka_xmlrpc
 xml_client = tutuka_xmlrpc.Tutuka_XMLRPC({'terminalID' : env('TerminalID'), 'terminalPassword' : env('TerminalPass')})
@@ -74,13 +74,6 @@ def get_profile(name):
 def get_profile_cards(name):
     profile_cards = [x for x in paydnadb.cards.find({'profile': name_to_pid(name)}, {'_id': 1, 'balance': 1})]
     return { "cards": profile_cards }
-
-@bp.route('/schemes', methods=['GET'])
-def get_schemes():
-    schemes = []
-    for scheme in paydnadb.schemes.find({}, {'_id': 0}):
-        schemes.append(scheme)
-    return { "schemes": schemes }
 
 @bp.route('/cards', methods=['GET'])
 def get_cards():

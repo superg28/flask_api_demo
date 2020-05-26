@@ -21,7 +21,11 @@ logzero.formatter(logFormat)
 import flaskapp.api.tutuka as tutuka
 import flaskapp.api.luhn as luhn
 import flaskapp.api.users as users
-import flaskapp.api_jwt as jwt
+import flaskapp.auth as auth
+import flaskapp.api.schemes as schemes
+import flaskapp.api.profiles as profiles
+import flaskapp.api.cards as cards
+
 
 UPLOAD_FOLDER_PREFIX = '/home/superg28/projects/paydna-flask-upload-server/uploads'
 # ID_UPLOAD_FOLDER = ''.join([UPLOAD_FOLDER_PREFIX,'/id'])
@@ -37,11 +41,14 @@ app.config['POA_UPLOAD_FOLDER'] = POA_UPLOAD_FOLDER
 app.register_blueprint(tutuka.bp)
 app.register_blueprint(luhn.bp)
 app.register_blueprint(users.bp)
-app.register_blueprint(jwt.bp)
+app.register_blueprint(schemes.bp)
+app.register_blueprint(profiles.bp)
+app.register_blueprint(cards.bp)
+app.register_blueprint(auth.bp)
 
 # init database connection
-from flaskapp.mongodb import conn
-db = conn.db_init()
+from flaskapp.mongoconnection import db_init
+db = db_init()
 
 CORS(app, resources=r'/upload/*')
 

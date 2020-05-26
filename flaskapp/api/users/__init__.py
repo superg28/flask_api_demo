@@ -24,8 +24,8 @@ from flaskapp.api.common import encrypt_str, decrypt_str
 # mdbclient = MongoClient(env('MongoUrl'), username=env('MongoUser'), password=env('MongoPass'))
 # paydnadb = mdbclient.payDNA
 
-from flaskapp.mongodb import conn
-paydnadb = conn.db_init()
+from flaskapp.mongoconnection import db_init
+paydnadb = db_init()
 
 bp = Blueprint('users', __name__, url_prefix='/api/users')
 # CORS(bp, resources=r'/*')
