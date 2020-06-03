@@ -20,14 +20,10 @@ env.read_envfile()
 from flaskapp.api.common import encrypt_str, decrypt_str
 
 # DB configs need to go here
-# from pymongo import MongoClient
-# mdbclient = MongoClient(env('MongoUrl'), username=env('MongoUser'), password=env('MongoPass'))
-# paydnadb = mdbclient.payDNA
-
 from flaskapp.mongoconnection import db_init
 paydnadb = db_init()
 
-bp = Blueprint('users', __name__, url_prefix='/api/users')
+bp = Blueprint('clients', __name__, url_prefix='/api/clients')
 # CORS(bp, resources=r'/*')
 CORS(bp)
 
@@ -49,14 +45,14 @@ def field_filter(field_string):
 def move_files(uid, filepath):
     '''
     move the uploaded (and virus scanned) files to a uid named directory
-    :uid the users id assigned on upload
+    :uid the clients id assigned on upload
     :file_type determines the folder that gets created
     :filename path of the originally uploaded file
     :return a path to the relocated file for insertion into the database
     '''
     # cast uid to string
     uid = str(uid)
-    uidpath = f'user_files/{uid}'
+    uidpath = f'client_files/{uid}'
     print(f'uidpath = {uidpath}')
     print(f'Server Path {SERVER_PATH_PREFIX}')
     subdirpath = os.path.join(SERVER_PATH_PREFIX, uidpath)
@@ -78,31 +74,27 @@ def move_files(uid, filepath):
 
 def get_uid():
     # returns a managed uid from the database counters
-    with paydnadb.counters.find({'_id': 'user_id'}) as cursor:
+    with paydnadb.counters.find({'_id': 'client_id'}) as cursor:
         uid = cursor.next().get('sequence') + 1
-        resp = paydnadb.counters.find_one_and_update({'_id': 'user_id'},{'$inc': {'sequence': 1}})
+        resp = paydnadb.counters.find_one_and_update({'_id': 'client_id'},{'$inc': {'sequence': 1}})
         print(resp)
     return uid
 
-# load users
-def load_users():
-    users = []
-    for user in paydnadb.users.find({}, {'uid': 1, 'name': 1, 'surname': 1, 'contact_email': 1, 'contact_cell': 1}):
-        users.append(user)
-    return users
-
-def add_user(user: dict):
-    with open(env('UserFile'), 'w') as fp:
-        users = json.dump(user, fp, indent=4)
+# load clients
+def load_clients():
+    clients = []
+    for client in paydnadb.clients.find({}, {'uid': 1, 'name': 1, 'surname': 1, 'contact_email': 1, 'contact_cell': 1}):
+        clients.append(client)
+    return clients
 
 @bp.route('/add', methods=['POST'])
-def user_add():
-    user = {}
+def client_add():
+    client = {}
     print(request.headers)
     uid = get_uid()
-    user['_id'] = uid
-    # default role for all new users
-    user['role'] = 'User'
+    client['_id'] = uid
+    # default role for all new clients
+    client['role'] = 'client'
     for field in request.form:
         sub, processedField = field_filter(field)
         value = request.form[field]
@@ -111,37 +103,37 @@ def user_add():
         if sub == '':
             # move the files to a new uid namespace for the foldername
             if processedField == 'id_document' or processedField == 'poa_document':
-                user[processedField] = move_files(uid, decrypt_str(value))
+                client[processedField] = move_files(uid, decrypt_str(value))
             else:
-                user[processedField] = value
+                client[processedField] = value
         else:
-            if user.get(sub):
+            if client.get(sub):
                 if value != 'undefined' and value != '':
-                    user[sub][processedField] = value
+                    client[sub][processedField] = value
             else:
                 if value != 'undefined' and value != '':
-                    user[sub] = {}
-                    user[sub][processedField] = value
-    user['registered_date'] = datetime.now().strftime('%Y-%m-%d.%H:%M:%S')
-    # user['registered_by'] # TODO: add registerer to the user
-    print(user)
-    resp = paydnadb.users.insert_one(user)
+                    client[sub] = {}
+                    client[sub][processedField] = value
+    client['registered_date'] = datetime.now().strftime('%Y-%m-%d.%H:%M:%S')
+    # client['registered_by'] # TODO: add registerer to the client
+    print(client)
+    resp = paydnadb.clients.insert_one(client)
     if resp.inserted_id:
-        return { 'resultCode': 0, 'resultText': 'User added successfully'}
+        return { 'resultCode': 0, 'resultText': 'client added successfully'}
     else:
-        return { 'resultCode': 255, 'resultText': 'Error adding user'}
+        return { 'resultCode': 255, 'resultText': 'Error adding client'}
 
 @bp.route('/', methods=['GET'])
-def users():
-    return { 'status': 'Users List', 'users': load_users() }
+def clients():
+    return { 'status': 'Users List', 'clients': load_clients() }
 
 @bp.route('/<int:uid>', methods=['GET'])
-def user(uid):
+def client(uid):
     print(f'URL id: {uid}')
-    if paydnadb.users.count_documents({'_id':uid}) != 0:
-        return { 'user': paydnadb.users.find_one({'_id':uid}) }
+    if paydnadb.clients.count_documents({'_id':uid}) != 0:
+        return { 'client': paydnadb.clients.find_one({'_id':uid}) }
     return { 'status': 204, 'message': 'User not found'}
 
 @bp.route('/update/<int:uid>', methods=['POST'])
-def user_update(uid):
-    return '<<< user update >>>'
+def client_update(uid):
+    return '<<< client update >>>'
