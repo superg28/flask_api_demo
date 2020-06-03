@@ -163,7 +163,7 @@ class Tutuka_XMLRPC:
         check_sum = self._create_checksum([method, self.terminalID, profileIDFrom, profileIDTo, amount, transactionID, transationDate.value])
         
         try:
-            response = self.xmlc.TransferFunds(self.terminalID, profileIDFrom, profileIDTo, amount, transactionID, transationDate, check_sum)
+            response = self.xmlc.TransferFundsBetweenProfiles(self.terminalID, profileIDFrom, profileIDTo, amount, transactionID, transationDate, check_sum)
             # print('Card Balance : {}'.format(balance))
             return response
         except xmlrpc.client.ProtocolError as err:
