@@ -23,12 +23,14 @@ CORS(bp)
 
 @bp.route('/encode', methods=['GET', 'POST'])
 def encode_token():
-    encoded = jwt.encode({ 'iat': datetime.utcnow(), "typ": "JWT", 'message': 'this is a token'}, env('API_JWT_SECRET'), algorithm="HS256")
-    return { 'token': encoded}
+    token = jwt.encode({ 'iat': datetime.utcnow(), "typ": "JWT", 'message': 'this is a token'}, env('API_JWT_SECRET'), algorithm="HS256")
+    return { 'token': token.decode()}
 
 @bp.route('/decode', methods=['GET', 'POST'])
 def decode_token():
+    token = ''
     encoded = jwt.encode({ 'iat': datetime.utcnow(), "typ": "JWT", 'message': 'this is a token'}, env('API_JWT_SECRET'), algorithm="HS256")
+    jwt.decode(request.args.get('token'))
     return { 'token': encoded}
 
 @bp.route('/', methods=['GET'])
