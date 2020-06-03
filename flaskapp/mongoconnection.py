@@ -68,5 +68,5 @@ class MongoDB(object):
 def db_init(db_name=None):
     url = 'mongodb://vbox-server:27017/'
     # c = MongoDB(env.str('MongoUrl'), env.str('MongoUser'), env.str('MongoPass'), env.str('MongoDatabase')).connection
-    c = MongoDB(url, env.str('MongoUser'), env.str('MongoPass'), env.str('MongoDatabase')).connection
+    c = MongoDB(env.str('MongoUrl'), env.str('MongoUser'), env.str('MongoPass'), env.str('MongoDatabase')).connection
     return c

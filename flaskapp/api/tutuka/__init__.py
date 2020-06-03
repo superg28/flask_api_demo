@@ -72,7 +72,7 @@ def get_profile(name):
 
 @bp.route('/profiles/<string:name>/cards', methods=['GET'])
 def get_profile_cards(name):
-    profile_cards = [x for x in paydnadb.cards.find({'profile': name_to_pid(name)}, {'_id': 1, 'balance': 1})]
+    profile_cards = [x for x in paydnadb.cards.find({'profile_id': name_to_pid(name)})]
     return { "cards": profile_cards }
 
 @bp.route('/cards', methods=['GET'])

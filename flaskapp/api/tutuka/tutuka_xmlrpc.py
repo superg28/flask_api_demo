@@ -13,8 +13,8 @@ class Tutuka_XMLRPC:
         self.terminalID = config['terminalID']
         self.terminalPassword = config['terminalPassword']
         # self.endPoint = 'https://voucherengine.tutuka.com/handlers/remote/profilexmlrpc.cfm'
-        self.endPoint = 'https://vexdev.tutuka.com/handlers/remote/profilexmlrpc.cfm'
-        self.xmlc = xmlrpc.client.ServerProxy(self.endPoint)
+        self._endPoint = 'https://vexdev.tutuka.com/handlers/remote/profilexmlrpc.cfm'
+        self.xmlc = xmlrpc.client.ServerProxy(self._endPoint)
 
     def _create_checksum(self, args: list) -> str:
         '''
@@ -35,7 +35,7 @@ class Tutuka_XMLRPC:
 
     def allocate_card(self, profileID, cardNumber, firstname, lastname, id_passport, cellphone, transactionID):
         '''
-        returns the balance of a specific card on a profile
+        Allocate a card to a bearer
         '''
         method = 'AllocateCard'
         transationDate = self._date_str()
@@ -51,8 +51,23 @@ class Tutuka_XMLRPC:
         except xmlrpc.client.Fault as fault:
             print("Fault : {}".format(fault))
 
-    def linkcard(self):
-        pass
+    def linkcard(self, profileID, cardNumber, transactionID):
+        '''
+        Link a card to a profile.
+        '''
+        method = 'LinkCard'
+        transationDate = self._date_str()
+        check_sum = self._create_checksum([method, self.terminalID, profileID, cardNumber, transactionID, transationDate.value])
+        
+        try:
+            response = self.xmlc.LinkCard(self.terminalID, profileID, cardNumber, transactionID, transationDate, check_sum)
+            return response
+        except xmlrpc.client.ProtocolError as err:
+            print("Protocol Error : {}".format(err))
+        except ConnectionRefusedError as err:
+            print("Connection Error : {}".format(err))
+        except xmlrpc.client.Fault as fault:
+            print("Fault : {}".format(fault))
 
     def linkcardsbyseqrange(self):
         pass

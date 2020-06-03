@@ -40,17 +40,15 @@ def get_schemes():
 
 @bp.route('/<string:sysname>', methods=['GET'])
 def get_scheme(sysname):
-    print(sysname)
+    # print(sysname)
     schemes = []
     return { 'scheme': paydnadb.schemes.find_one({'sysName': sysname}, {"_id": 0}) }
 
 @bp.route('/<string:sysname>/cards', methods=['GET'])
 def get_scheme_cards(sysname):
     schemeId = get_scheme_id(sysname)
-    print(schemeId)
     cards = []
     for card in paydnadb.cards.find({'scheme': schemeId}):
-        print(card.get('scheme'))
         cards.append(card)
     return { 'cards': cards }
 

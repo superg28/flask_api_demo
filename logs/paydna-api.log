@@ -14,3 +14,4 @@
 2020-05-21 14:10:47,781:__init__:32:INFO:Card balance for sandbox (4731098549), 5338922017716157
 2020-05-21 14:11:51,744:__init__:32:INFO:Card balance for sandbox (4731098549), 5338922017716157
 2020-05-21 14:11:52,263:__init__:35:INFO:Balance response: card: 5338922017716157, 'expiryDate': 20491231T00:00:00, 'balance': 90933, 'transactionID': 20200521141151.744776
+2020-06-02 13:54:20,672:__init__:71:INFO:/home/superg28/projects/paydna-flask-upload-server/uploads/id/Screenshot_from_2020-06-02_13-53-17.png

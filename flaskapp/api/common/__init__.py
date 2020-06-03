@@ -9,6 +9,7 @@ env = Env(
 env.read_envfile()
 
 from cryptography.fernet import Fernet
+
 with open(env('FernKey'), 'rb') as fp:
     key = fp.read()
 
@@ -22,6 +23,12 @@ def find_card(str_to_search):
         return str_to_search[find.start():find.end()]
     else:
         return 'None'
+
+def get_bool(stringbool):
+    if stringbool.lower() == "true":
+        return True
+    else:
+        return False
 
 def encrypt_str(str_to_encrypt):
     # return an encrypted string

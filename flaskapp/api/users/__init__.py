@@ -131,7 +131,7 @@ def user_add():
     else:
         return { 'resultCode': 255, 'resultText': 'Error adding user'}
 
-@bp.route('/all', methods=['GET'])
+@bp.route('/', methods=['GET'])
 def users():
     return { 'status': 'Users List', 'users': load_users() }
 

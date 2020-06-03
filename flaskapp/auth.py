@@ -18,7 +18,7 @@ env = Env(
 
 env.read_envfile()
 
-bp = Blueprint('api_jwt', __name__, url_prefix='/jwt')
+bp = Blueprint('auth', __name__, url_prefix='/auth')
 CORS(bp)
 
 @bp.route('/encode', methods=['GET', 'POST'])
@@ -31,13 +31,14 @@ def decode_token():
     encoded = jwt.encode({ 'iat': datetime.utcnow(), "typ": "JWT", 'message': 'this is a token'}, env('API_JWT_SECRET'), algorithm="HS256")
     return { 'token': encoded}
 
-@bp.route('/', methods=['POST'])
+@bp.route('/', methods=['GET'])
 def jwt_base():
     return 'this is the JWT base'
 
 @bp.route('/test', methods=['POST'])
 def jwt_test():
-    print(request.headers, current_app.config)
+    print(request.headers)
+    # print(current_app.config)
     token = request.headers['authorization'].split(' ')[1]
     try:
         return jwt.decode(token, 'mysecret', algorithms="HS256")

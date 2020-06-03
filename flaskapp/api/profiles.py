@@ -31,22 +31,24 @@ def pid_to_name(pid):
 def name_to_pid(name):
     return paydnadb.profiles.find_one({'name': name}, {'_id': 1}).get('_id')
 
-@bp.route('/profiles', methods=['GET'])
+@bp.route('/', methods=['GET'])
 def get_profiles():
     profiles = []
     for profile in paydnadb.profiles.find({}):
         profiles.append(profile)
     return { "profiles": profiles }
 
-@bp.route('/profiles/<string:name>', methods=['GET'])
+@bp.route('/<string:name>', methods=['GET'])
 def get_profile(name):
     return { "profile": paydnadb.profiles.find_one({'name': name}, {'_id': 0}) }
 
-@bp.route('/profiles/<string:name>/cards', methods=['GET'])
+@bp.route('/<string:name>/cards', methods=['GET'])
 def get_profile_cards(name):
-    profile_cards = [x for x in paydnadb.cards.find({'profile': name_to_pid(name)}, {'_id': 1, 'balance': 1})]
+    profile_cards = [x for x in paydnadb.cards.find({'profile_id': name_to_pid(name)}, {'_id': 1, 'balance': 1})]
     return { "cards": profile_cards }
 
-@bp.route('/', methods=['GET'])
-def root():
-    return '<<< Tutuka API >>>'
+@bp.route('/id-to-name', methods=['POST'])
+def id_to_name():
+    print(request.args)
+    pid = request.args.get('pid')
+    return { 'name': paydnadb.profiles.find_one({'_id': pid}, {'name': 1}).get('name') }
