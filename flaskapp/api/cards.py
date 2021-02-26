@@ -26,6 +26,9 @@ env.read_envfile()
 from flaskapp.mongoconnection import db_init
 paydnadb = db_init()
 
+# token authentication handling
+from flaskapp.auth import jwt_required
+
 # tutuka tools TODO: probably be replace by transaction library
 from flaskapp.api.tutuka import tutuka_xmlrpc
 xml_client = tutuka_xmlrpc.Tutuka_XMLRPC({'terminalID' : env('TerminalID'), 'terminalPassword' : env('TerminalPass')})
@@ -51,6 +54,7 @@ def get_month_load_todate(card):
     return month_balance
 
 @bp.route('/', methods=['GET'])
+@jwt_required('super')
 def get_cards():
     cards = []
     for card in paydnadb.cards.find({}, {'authNum': 0}):
@@ -58,6 +62,7 @@ def get_cards():
     return make_response({ "cards": cards }, 200)
 
 @bp.route('/<string:id>', methods=['GET'])
+@jwt_required('super')
 def get_card(id):
     return make_response({ "card": paydnadb.cards.find_one({'_id': id}, {'authNum': 0}) }, 200)
 
@@ -66,27 +71,18 @@ def get_cardtrans(id):
     return make_response({ "card": paydnadb.transaction_q.find_one({'card': id})}, 200)
 
 @bp.route('/load/<string:id>', methods=['POST'])
+@jwt_required('super')
 def load_card(id):
-    print(request.args)
+    print(request.form.items())
     if request.method == 'POST':
-        card_dets = paydnadb.cards.find_one({'_id': id})
-        current_bal = card_dets.get('balance') if card_dets.get('balance') else 0
-        monthly_bal = card_dets.get('monthlyLoadBalance') if card_dets.get('monthlyLoadBalance') else 0
-        load_value = int(request.args.get('loadValue'))
-        if ((load_value + current_bal) <= env('MaxBalance')) and ((load_value + monthly_bal) <= env('MonthLoadMax')):
-            # add to load transq
-            transactions.add_to_que(card_dets.get('_id'), 'LOAD', load_value, 'user-from-jwt')
-            # add fees as subtran to transq
-            transactions.add_to_que(card_dets.get('_id'), 'FEE', load_value, 'System from scheme')
-            resp = xml_client.load_card_deduct_profile(card_dets.get('profile_id'), card_dets.get('_id'), load_value, get_trans_id())
-            print(resp)
-            if resp.get('resultCode') == 1:
-                paydnadb.cards.update_one({'_id': id}, { '$set': {'balance': current_bal + load_value, 'monthlyLoadBalance': monthly_bal + load_value}})
-                return { "action": f'card loaded with R{(load_value / 100.0):.2f}' }
-            else:
-                return { "loadError": resp.get('resultText')}
+        load_value = int(request.form.get('loadValue'))
+        qued_by = request.form.get('username')
+        # add to load transq
+        resp = transactions.load_to_que(id, 'load', load_value, 'user-from-jwt')
+        if resp.get('resultCode') == 1 and resp != None:
+            return { "action": f'card loaded with R{(load_value / 100.0):.2f}' }
         else:
-            return { "loadError": 'Not loaded, max balance or monthly load exceeded'}
+            return { "loadError": resp.get('resultText')}
     else:
         return make_response({'Error': 'method not allowed'}, 401)
 
@@ -137,9 +133,20 @@ def card_status(id):
         return make_response({'error': 'Error getting status for the card'})
 
 @bp.route('/balance/<string:id>', methods=['GET'])
+@jwt_required('super')
 def card_balance(id):
     card_dets = paydnadb.cards.find_one({'_id': id})
     resp = xml_client.balance(card_dets.get('profile_id'), card_dets.get('_id'), get_trans_id())
+    if resp.get('resultCode') == 1:
+        paydnadb.cards.update_one({'_id': id}, {'$set': {'balance': resp['balanceAmount']}})
+        return make_response({ "balance": resp['balanceAmount']}, 200)
+    else:
+        return make_response({'error': 'Error getting status for the card'})
+
+@bp.route('/transq/<string:id>', methods=['GET'])
+@jwt_required('super')
+def transaction_q(id):
+    card_dets = paydnadb.transaction_q.find({'card': id})
     if resp.get('resultCode') == 1:
         paydnadb.cards.update_one({'_id': id}, {'$set': {'balance': resp['balanceAmount']}})
         return make_response({ "balance": resp['balanceAmount']}, 200)

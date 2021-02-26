@@ -15,6 +15,9 @@ env = Env(
 )
 env.read_envfile()
 
+# token authentication handling
+from flaskapp.auth import jwt_required
+
 # get db connection
 from flaskapp.mongoconnection import db_init
 paydnadb = db_init()
@@ -32,6 +35,7 @@ def name_to_pid(name):
     return paydnadb.profiles.find_one({'name': name}, {'_id': 1}).get('_id')
 
 @bp.route('/', methods=['GET'])
+@jwt_required('super')
 def get_profiles():
     profiles = []
     for profile in paydnadb.profiles.find({}):
@@ -39,10 +43,12 @@ def get_profiles():
     return { "profiles": profiles }
 
 @bp.route('/<string:name>', methods=['GET'])
+@jwt_required('super')
 def get_profile(name):
     return { "profile": paydnadb.profiles.find_one({'name': name}, {'_id': 0}) }
 
 @bp.route('/<string:name>/cards', methods=['GET'])
+@jwt_required('super')
 def get_profile_cards(name):
     profile_cards = [x for x in paydnadb.cards.find({'profile_id': name_to_pid(name)}, {'_id': 1, 'balance': 1})]
     return { "cards": profile_cards }

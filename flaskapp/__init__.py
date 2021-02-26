@@ -20,7 +20,7 @@ logzero.formatter(logFormat)
 # import blueprints
 import flaskapp.api.tutuka as tutuka
 import flaskapp.api.luhn as luhn
-import flaskapp.api.users as users
+import flaskapp.api.clients as clients
 import flaskapp.auth as auth
 import flaskapp.api.schemes as schemes
 import flaskapp.api.profiles as profiles
@@ -40,7 +40,7 @@ app.config['POA_UPLOAD_FOLDER'] = POA_UPLOAD_FOLDER
 # register blueprints
 app.register_blueprint(tutuka.bp)
 app.register_blueprint(luhn.bp)
-app.register_blueprint(users.bp)
+app.register_blueprint(clients.bp)
 app.register_blueprint(schemes.bp)
 app.register_blueprint(profiles.bp)
 app.register_blueprint(cards.bp)

@@ -5,6 +5,9 @@
 # virtual env
 venv
 
+#ENV varialbles
+.env
+
 # upload dir
 uploads/*
 user_files/*
