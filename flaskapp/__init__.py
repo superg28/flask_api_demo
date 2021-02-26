@@ -19,7 +19,7 @@ env = Env(
 )
 env.read_envfile()
 
-logzero.logfile(filename='logs/api.log', maxBytes=25e7, backupCount=4, loglevel=logging.DEBUG)
+logzero.logfile(filename=env('LOG_FILE'), maxBytes=25e7, backupCount=4, loglevel=logging.DEBUG)
 logFormat = logging.Formatter('%(asctime)s:%(module)s:%(lineno)d:%(levelname)s:%(message)s')
 logzero.formatter(logFormat)
 

@@ -3,7 +3,7 @@ Demo code of a flask api running in docker with a mongodb as a database
 
 ## get a JWT auth token
 ```bash
-TOKEN=$(curl -s -X POST -H 'Content-Type: multipart/form-data' -F 'username=superone' -F 'password=superone' http://YOUR_DOMAIN_HERE/auth/login | jq -r '.token')
+TOKEN=$(curl -s -X POST -H 'Content-Type: multipart/form-data' -F 'username=USERNAME' -F 'password=PASSWORD' http://YOUR_DOMAIN_HERE/auth/login | jq -r '.token')
 ```
 
 ## endpoints to browse
