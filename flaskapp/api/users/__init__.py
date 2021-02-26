@@ -14,24 +14,17 @@ from datetime import datetime
 
 env = Env(
     UserFile=str,
+    SERVER_PATH_PREFIX=str
 )
 env.read_envfile()
 
 from flaskapp.api.common import encrypt_str, decrypt_str
 
-# DB configs need to go here
-# from pymongo import MongoClient
-# mdbclient = MongoClient(env('MongoUrl'), username=env('MongoUser'), password=env('MongoPass'))
-# paydnadb = mdbclient.payDNA
-
 from flaskapp.mongoconnection import db_init
 paydnadb = db_init()
 
 bp = Blueprint('users', __name__, url_prefix='/api/users')
-# CORS(bp, resources=r'/*')
 CORS(bp)
-
-SERVER_PATH_PREFIX = '/home/superg28/projects/paydna-flask-upload-server'
 
 def field_filter(field_string):
     postal_pattern = re.compile(r'^postal_')
@@ -58,8 +51,8 @@ def move_files(uid, filepath):
     uid = str(uid)
     uidpath = f'user_files/{uid}'
     print(f'uidpath = {uidpath}')
-    print(f'Server Path {SERVER_PATH_PREFIX}')
-    subdirpath = os.path.join(SERVER_PATH_PREFIX, uidpath)
+    print(f"Server Path {env('SERVER_PATH_PREFIX')}")
+    subdirpath = os.path.join(env('SERVER_PATH_PREFIX'), uidpath)
     print(f'subdirpath: {subdirpath}')
     if not os.path.exists(subdirpath):
         try:

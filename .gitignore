@@ -6,7 +6,7 @@
 venv
 
 #ENV varialbles
-.env
+*/.env
 
 # upload dir
 uploads/*
