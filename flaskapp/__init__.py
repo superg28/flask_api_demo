@@ -55,6 +55,10 @@ CORS(app, resources=r'/upload/*')
 def file_type(filename):
     print(filename.rsplit('.', 1)[1])
 
+@app.route('/', methods=['GET'])
+def say_hello():
+    return 'Welcome to the Flask API demo'
+
 @app.route('/upload/<string:endpoint>', methods=['POST'])
 def file_upload(endpoint):
     file = request.files['myfile']
