@@ -12,8 +12,14 @@ import logging
 import logzero
 from logzero import logger
 
-LOG_FILE = '/home/superg28/projects/paydna-flask-upload-server/logs'
-logzero.logfile(filename='logs/paydna-api.log', maxBytes=25e7, backupCount=4, loglevel=logging.DEBUG)
+from envparse import Env
+env = Env(
+    LOG_FILE=str,
+    SERVER_PATH_PREFIX=str
+)
+env.read_envfile()
+
+logzero.logfile(filename='logs/api.log', maxBytes=25e7, backupCount=4, loglevel=logging.DEBUG)
 logFormat = logging.Formatter('%(asctime)s:%(module)s:%(lineno)d:%(levelname)s:%(message)s')
 logzero.formatter(logFormat)
 
@@ -27,10 +33,8 @@ import flaskapp.api.profiles as profiles
 import flaskapp.api.cards as cards
 
 
-UPLOAD_FOLDER_PREFIX = '/home/superg28/projects/paydna-flask-upload-server/uploads'
-# ID_UPLOAD_FOLDER = ''.join([UPLOAD_FOLDER_PREFIX,'/id'])
-ID_UPLOAD_FOLDER = UPLOAD_FOLDER_PREFIX + '/id'
-POA_UPLOAD_FOLDER = ''.join([UPLOAD_FOLDER_PREFIX,'/poa'])
+ID_UPLOAD_FOLDER = env('SERVER_PATH_PREFIX') + '/id'
+POA_UPLOAD_FOLDER = ''.join([env('SERVER_PATH_PREFIX'),'/poa'])
 
 app = Flask(__name__)
 # app.config['UPLOAD_FOLDER_PREFIX'] = UPLOAD_FOLDER_PREFIX
